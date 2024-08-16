@@ -63,6 +63,7 @@ class DbtNode:
     file_path: Path
     tags: list[str] = field(default_factory=lambda: [])
     config: dict[str, Any] = field(default_factory=lambda: {})
+    meta: dict[str, Any] = field(default_factory=lambda: {})
     has_freshness: bool = False
     has_test: bool = False
 
@@ -684,6 +685,7 @@ class DbtGraph:
                     file_path=self.execution_config.project_path / Path(node_dict["original_file_path"]),
                     tags=node_dict["tags"],
                     config=node_dict["config"],
+                    meta=node_dict["meta"],
                     has_freshness=(
                         is_freshness_effective(node_dict.get("freshness"))
                         if DbtResourceType(node_dict["resource_type"]) == DbtResourceType.SOURCE
