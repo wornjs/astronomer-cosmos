@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
 from subprocess import PIPE, Popen
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Dict
 
 from airflow.models import Variable
 
@@ -67,6 +67,9 @@ class DbtNode:
     has_freshness: bool = False
     has_test: bool = False
 
+    def _get_cosmos_custom(self) -> Dict[str, Any]:
+        return self.config.get("meta", {}).get("cosmos", {})
+
     @property
     def resource_name(self) -> str:
         """
@@ -87,6 +90,14 @@ class DbtNode:
     @property
     def owner(self) -> str:
         return str(self.config.get("meta", {}).get("owner", ""))
+
+    @property
+    def airflow_pool(self) -> Optional[str]:
+        cosmos_info = self._get_cosmos_custom()
+        if "pool" in cosmos_info:
+            return cosmos_info["pool"]
+        else:
+            return None
 
     @property
     def context_dict(self) -> dict[str, Any]:
@@ -211,16 +222,16 @@ class DbtGraph:
     load_method: LoadMode = LoadMode.AUTOMATIC
 
     def __init__(
-        self,
-        project: ProjectConfig,
-        render_config: RenderConfig = RenderConfig(),
-        execution_config: ExecutionConfig = ExecutionConfig(),
-        profile_config: ProfileConfig | None = None,
-        cache_dir: Path | None = None,
-        cache_identifier: str = "",
-        dbt_vars: dict[str, str] | None = None,
-        airflow_metadata: dict[str, str] | None = None,
-        operator_args: dict[str, Any] | None = None,
+            self,
+            project: ProjectConfig,
+            render_config: RenderConfig = RenderConfig(),
+            execution_config: ExecutionConfig = ExecutionConfig(),
+            profile_config: ProfileConfig | None = None,
+            cache_dir: Path | None = None,
+            cache_identifier: str = "",
+            dbt_vars: dict[str, str] | None = None,
+            airflow_metadata: dict[str, str] | None = None,
+            operator_args: dict[str, Any] | None = None,
     ):
         self.project = project
         self.render_config = render_config
@@ -375,9 +386,9 @@ class DbtGraph:
         return cache_dict
 
     def load(
-        self,
-        method: LoadMode = LoadMode.AUTOMATIC,
-        execution_mode: ExecutionMode = ExecutionMode.LOCAL,
+            self,
+            method: LoadMode = LoadMode.AUTOMATIC,
+            execution_mode: ExecutionMode = ExecutionMode.LOCAL,
     ) -> None:
         """
         Load a `dbt` project into a `DbtGraph`, setting `nodes` and `filtered_nodes` accordingly.
@@ -417,7 +428,7 @@ class DbtGraph:
         logger.info("Total filtered nodes: %i", len(self.nodes))
 
     def run_dbt_ls(
-        self, dbt_cmd: str, project_path: Path, tmp_dir: Path, env_vars: dict[str, str]
+            self, dbt_cmd: str, project_path: Path, tmp_dir: Path, env_vars: dict[str, str]
     ) -> dict[str, DbtNode]:
         """Runs dbt ls command and returns the parsed nodes."""
         if self.render_config.source_rendering_behavior != SourceRenderingBehavior.NONE:
@@ -552,7 +563,7 @@ class DbtGraph:
                 cache._copy_partial_parse_to_project(latest_partial_parse, tmpdir_path)
 
             with self.profile_config.ensure_profile(
-                use_mock_values=self.render_config.enable_mock_profile
+                    use_mock_values=self.render_config.enable_mock_profile
             ) as profile_values, environ(self.env_vars):
                 (profile_path, env_vars) = profile_values
                 env = os.environ.copy()
