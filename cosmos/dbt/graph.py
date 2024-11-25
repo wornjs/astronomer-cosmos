@@ -69,6 +69,15 @@ class DbtNode:
 
     @property
     def cosmos_custom(self) -> Dict[str, Any]:
+        """
+        This method is designed to extend the dbt project's functionality by incorporating Airflow-related metadata into the dbt YAML configuration.
+        Since dbt projects are independent of Airflow, adding Airflow-specific information to the `meta` field within the dbt YAML allows Airflow tasks to
+        utilize this information during execution.
+
+        Examples: pool, pool_slots, queue, ...
+        Returns:
+            Dict[str, Any]: A dictionary containing custom metadata configurations for integration with Airflow.
+        """
         return self.config.get("meta", {}).get("cosmos", {})
 
     @property
