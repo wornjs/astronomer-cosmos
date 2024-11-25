@@ -67,7 +67,8 @@ class DbtNode:
     has_freshness: bool = False
     has_test: bool = False
 
-    def _get_cosmos_custom(self) -> Dict[str, Any]:
+    @property
+    def cosmos_custom(self) -> Dict[str, Any]:
         return self.config.get("meta", {}).get("cosmos", {})
 
     @property
@@ -90,14 +91,6 @@ class DbtNode:
     @property
     def owner(self) -> str:
         return str(self.config.get("meta", {}).get("owner", ""))
-
-    @property
-    def airflow_pool(self) -> Optional[str]:
-        cosmos_info = self._get_cosmos_custom()
-        if "pool" in cosmos_info:
-            return cosmos_info["pool"]
-        else:
-            return None
 
     @property
     def context_dict(self) -> dict[str, Any]:
